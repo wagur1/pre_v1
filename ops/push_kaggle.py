@@ -30,6 +30,7 @@ else
 fi
 
 cd "$REPO"
+export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 echo "=== [2/4] Installing dependencies ==="
 pip install -q pyyaml tqdm pycocotools
 

@@ -9,7 +9,12 @@ import json
 import math
 import os
 import subprocess
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import numpy as np
 import torch
@@ -57,6 +62,7 @@ def evaluate_1000(
                 sample = dataset[idx]
                 clip = sample["clip"].unsqueeze(0).to(device)  # [1, C, 1, H, W]
                 boxes = sample["boxes"]
+                boxes_arg = [boxes] if (boxes is not None and len(boxes) > 0) else None
 
                 # Anchor encode/decode
                 rec_a, bpp_a = codec.encode_decode_clip(clip.squeeze(0), qp=qp)
@@ -66,7 +72,7 @@ def evaluate_1000(
 
                 # AdaVCM encode/decode
                 with torch.no_grad():
-                    out = model(clip, boxes=[boxes], qp=float(qp))
+                    out = model(clip, boxes=boxes_arg, qp=float(qp))
                     prep_clip = out["preprocessed"].squeeze(0)
 
                 rec_t, bpp_t = codec.encode_decode_clip(prep_clip, qp=qp)

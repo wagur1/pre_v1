@@ -1,9 +1,12 @@
-"""Action Recognition & Spatiotemporal Video Benchmark for AdaVCM."""
-from __future__ import annotations
-
 import argparse
 import json
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -48,7 +51,8 @@ def run_video_ar_benchmark(seq_dir: str | None = None, num_clips: int = 200):
 
             # AdaVCM with Spatio-temporal filtering & TBR
             with torch.no_grad():
-                out = model(clip, boxes=[boxes] if boxes else None, qp=float(qp))
+                boxes_arg = [boxes] if (boxes is not None and len(boxes) > 0) else None
+                out = model(clip, boxes=boxes_arg, qp=float(qp))
                 prep_clip = out["preprocessed"].squeeze(0)
 
             rec_t, bpp_t = codec.encode_decode_clip(prep_clip, qp=qp)

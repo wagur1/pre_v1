@@ -10,7 +10,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import numpy as np
 import torch
@@ -44,6 +49,7 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
             sample = dataset[idx]
             clip = sample["clip"].unsqueeze(0).to(device)
             boxes = sample["boxes"]
+            boxes_arg = [boxes] if (boxes is not None and len(boxes) > 0) else None
 
             # 1. Anchor
             rec_a, bpp_a = codec.encode_decode_clip(clip.squeeze(0), qp=qp)
@@ -53,7 +59,7 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
 
             # 2. Full AdaVCM
             with torch.no_grad():
-                out_full = model_full(clip, boxes=[boxes], qp=float(qp))
+                out_full = model_full(clip, boxes=boxes_arg, qp=float(qp))
                 prep_full = out_full["preprocessed"].squeeze(0)
             rec_full, bpp_full = codec.encode_decode_clip(prep_full, qp=qp)
             acc_full = 1.0 - float(torch.abs(rec_full - clip.squeeze(0)).mean().item())
@@ -62,7 +68,7 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
 
             # 3. No TBR (temporal alpha = 0)
             with torch.no_grad():
-                w_map = model_full.salience_estimator(clip, boxes=[boxes])
+                w_map = model_full.salience_estimator(clip, boxes=boxes_arg)
                 sigma = model_full.spatial_filter.default_sigma
                 prep_notbr = model_full.spatial_filter(clip, w_map, sigma=sigma).squeeze(0)
             rec_notbr, bpp_notbr = codec.encode_decode_clip(prep_notbr, qp=qp)

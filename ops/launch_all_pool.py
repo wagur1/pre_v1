@@ -46,6 +46,7 @@ REPO=/kaggle/working/pre_v1
 rm -rf "$REPO"
 git clone https://github.com/wagur1/pre_v1.git "$REPO"
 cd "$REPO"
+export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 pip install -q pyyaml tqdm
 
 echo "=== Running Action Recognition & Spatiotemporal Video Benchmark ==="
@@ -65,6 +66,7 @@ REPO=/kaggle/working/pre_v1
 rm -rf "$REPO"
 git clone https://github.com/wagur1/pre_v1.git "$REPO"
 cd "$REPO"
+export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 pip install -q pyyaml tqdm pycocotools
 
 TR=$(find /kaggle/input -maxdepth 8 -type d -name "train2017" | head -1 || true)
@@ -92,6 +94,7 @@ REPO=/kaggle/working/pre_v1
 rm -rf "$REPO"
 git clone https://github.com/wagur1/pre_v1.git "$REPO"
 cd "$REPO"
+export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 pip install -q pyyaml tqdm pycocotools
 
 TR=$(find /kaggle/input -maxdepth 8 -type d -name "train2017" | head -1 || true)
