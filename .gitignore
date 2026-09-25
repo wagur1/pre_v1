@@ -6,4 +6,5 @@ __pycache__/
 outputs/
 .pytest_cache/
 ops/_push/
+kaggle_output/
 .env
