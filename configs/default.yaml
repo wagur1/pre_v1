@@ -1,0 +1,22 @@
+# Default Configuration for AdaVCM
+model:
+  dilate_radius: 5
+  default_sigma: 6.0
+  default_alpha: 0.85
+  learnable_policy: true
+
+loss:
+  lambda_rate: 0.5
+
+train:
+  epochs: 5
+  batch_size: 4
+  lr: 0.0003
+
+data:
+  img_dir: "data/train"
+  ann_file: "data/annotations.json"
+  image_size: 256
+  max_samples: 1000
+
+out_dir: "outputs/train"

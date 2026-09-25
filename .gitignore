@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.pth
+*.pt
+outputs/
+.pytest_cache/
+ops/_push/
+.env

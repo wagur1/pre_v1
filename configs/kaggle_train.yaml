@@ -1,0 +1,22 @@
+# Kaggle Training Configuration for AdaVCM
+model:
+  dilate_radius: 6
+  default_sigma: 8.0
+  default_alpha: 0.88
+  learnable_policy: true
+
+loss:
+  lambda_rate: 0.6
+
+train:
+  epochs: 8
+  batch_size: 8
+  lr: 0.0003
+
+data:
+  img_dir: "/kaggle/input/coco-2017-dataset/coco2017/train2017"
+  ann_file: "/kaggle/input/coco-2017-dataset/coco2017/annotations/instances_train2017.json"
+  image_size: 320
+  max_samples: 5000
+
+out_dir: "/kaggle/working/outputs/train"
