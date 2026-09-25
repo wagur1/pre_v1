@@ -17,6 +17,10 @@ def main():
     p.add_argument("--config", default="configs/default.yaml", help="Path to config file")
     p.add_argument("--epochs", type=int, default=None)
     p.add_argument("--lr", type=float, default=None)
+    p.add_argument("--batch-size", type=int, default=None)
+    p.add_argument("--max-samples", type=int, default=None)
+    p.add_argument("--img-dir", default=None, help="Directory containing images")
+    p.add_argument("--ann-file", default=None, help="Path to annotations JSON")
     p.add_argument("--device", default=None)
     p.add_argument("--synthetic", action="store_true", help="Use synthetic data generator for smoke testing")
     args = p.parse_args()
@@ -30,7 +34,7 @@ def main():
     # Overrides
     epochs = args.epochs or cfg.get("train", {}).get("epochs", 10)
     lr = args.lr or cfg.get("train", {}).get("lr", 3e-4)
-    batch_size = cfg.get("train", {}).get("batch_size", 4)
+    batch_size = args.batch_size or cfg.get("train", {}).get("batch_size", 4)
     lambda_rate = cfg.get("loss", {}).get("lambda_rate", 0.5)
 
     device_str = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,8 +43,9 @@ def main():
 
     # Dataset
     data_cfg = cfg.get("data", {})
-    img_dir = data_cfg.get("img_dir", "")
-    ann_file = data_cfg.get("ann_file", "")
+    img_dir = args.img_dir or data_cfg.get("img_dir", "")
+    ann_file = args.ann_file or data_cfg.get("ann_file", "")
+    max_samples = args.max_samples or data_cfg.get("max_samples", None)
 
     if args.synthetic or not Path(img_dir).exists():
         print("[AdaVCM] Initializing Synthetic Video VCM Dataset...")
@@ -51,10 +56,11 @@ def main():
             img_dir=img_dir,
             ann_file=ann_file,
             image_size=data_cfg.get("image_size", 320),
-            max_samples=data_cfg.get("max_samples", None),
+            max_samples=max_samples,
         )
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+    num_workers = 2 if torch.cuda.is_available() else 0
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     # Model
     model = AdaVCM(

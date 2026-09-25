@@ -31,18 +31,24 @@ fi
 
 cd "$REPO"
 echo "=== [2/4] Installing dependencies ==="
-pip install -q pyyaml tqdm
+pip install -q pyyaml tqdm pycocotools
 
-echo "=== [3/4] Running AdaVCM Training ==="
-if [ -d "/kaggle/input/coco-2017-dataset/coco2017" ]; then
-    echo "COCO 2017 dataset detected! Training on real images..."
-    python train.py --config configs/kaggle_train.yaml --epochs 5
+echo "=== [3/4] Running AdaVCM Real Data Training ==="
+TR=$(find /kaggle/input -maxdepth 8 -type d -name "train2017" | head -1 || true)
+ANN=$(find /kaggle/input -maxdepth 8 -type f -name "instances_train2017.json" | head -1 || true)
+
+if [ -n "$TR" ] && [ -n "$ANN" ] && [ -d "$TR" ] && [ -f "$ANN" ]; then
+    echo "Found COCO Dataset:"
+    echo "  Images: $TR"
+    echo "  Annotations: $ANN"
+    echo "Training AdaVCM on 10,000 real images for 10 epochs..."
+    python train.py --img-dir "$TR" --ann-file "$ANN" --max-samples 10000 --batch-size 16 --epochs 10 --device cuda
 else
-    echo "Running self-contained video training with synthetic spatiotemporal benchmarks..."
-    python train.py --synthetic --epochs 8 --device cuda
+    echo "Running benchmark video training on synthetic spatiotemporal dataset..."
+    python train.py --synthetic --epochs 16 --device cuda
 fi
 
-echo "=== [4/4] Evaluating Rate-Accuracy and BD-Rate ==="
+echo "=== [4/4] Evaluating Rate-Accuracy and BD-Rate across QPs [27, 32, 38, 43] ==="
 python evaluate.py --codec h264 --qps 27,32,38,43 --synthetic
 
 echo "=== ALL TASKS COMPLETED SUCCESSFULLY ==="
