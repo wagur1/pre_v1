@@ -12,6 +12,21 @@ from src.data import VideoTaskDataset, SyntheticVCMDataset
 from src.engine import PolicyTrainer
 
 
+def vcm_collate_fn(batch):
+    clips = torch.stack([b["clip"] for b in batch], dim=0)
+    boxes = [b["boxes"] for b in batch]
+    scores = [b["scores"] for b in batch]
+    qps = torch.tensor([float(b.get("target_qp", 35.0)) for b in batch], dtype=torch.float32)
+    ids = [b["id"] for b in batch]
+    return {
+        "clip": clips,
+        "boxes": boxes,
+        "scores": scores,
+        "target_qp": qps,
+        "ids": ids,
+    }
+
+
 def main():
     p = argparse.ArgumentParser(description="Train AdaVCM Adaptive Preprocessing Policy")
     p.add_argument("--config", default="configs/default.yaml", help="Path to config file")
@@ -60,7 +75,13 @@ def main():
         )
 
     num_workers = 2 if torch.cuda.is_available() else 0
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        collate_fn=vcm_collate_fn,
+    )
 
     # Model
     model = AdaVCM(
