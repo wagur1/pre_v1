@@ -7,8 +7,8 @@ pool_path = Path(r"C:\Users\Wagur1\Downloads\pool.json")
 with open(pool_path) as f:
     pool = json.load(f)
 
-account = "ngynanhthuw"
-slug = "adavcm-real-detector-map-eval"
+account = "tranthihongdieu"
+slug = "adavcm-real-detector-benchmark"
 token = pool[account]
 os.environ["KAGGLE_API_TOKEN"] = token
 
@@ -27,18 +27,42 @@ cd "$REPO"
 export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 pip install -q pyyaml tqdm pycocotools
 
-echo "=== Running Real Neural Object Detector mAP@0.5 Evaluation on COCO ==="
-TR=$(find /kaggle/input -maxdepth 8 -type d -name "train2017" | head -1 || true)
-ANN=$(find /kaggle/input -maxdepth 8 -type f -name "instances_train2017.json" | head -1 || true)
+echo "=== System & GPU Environment ==="
+nvidia-smi
 
-if [ -n "$TR" ] && [ -n "$ANN" ] && [ -d "$TR" ] && [ -f "$ANN" ]; then
-    echo "Found COCO Dataset: $TR"
-    python ops/run_real_detector_map.py --img-dir "$TR" --ann-file "$ANN" --num-samples 500
+echo "=== Locating COCO Dataset in /kaggle/input ==="
+VAL_DIR=$(find /kaggle/input -maxdepth 6 -type d -name "val2017" | head -1 || true)
+VAL_ANN=$(find /kaggle/input -maxdepth 6 -type f -name "instances_val2017.json" | head -1 || true)
+TRAIN_DIR=$(find /kaggle/input -maxdepth 6 -type d -name "train2017" | head -1 || true)
+TRAIN_ANN=$(find /kaggle/input -maxdepth 6 -type f -name "instances_train2017.json" | head -1 || true)
+
+IMG_DIR=""
+ANN_FILE=""
+if [ -n "$VAL_DIR" ] && [ -n "$VAL_ANN" ] && [ -d "$VAL_DIR" ] && [ -f "$VAL_ANN" ]; then
+    echo "Found COCO val2017: $VAL_DIR"
+    IMG_DIR="$VAL_DIR"
+    ANN_FILE="$VAL_ANN"
+elif [ -n "$TRAIN_DIR" ] && [ -n "$TRAIN_ANN" ] && [ -d "$TRAIN_DIR" ] && [ -f "$TRAIN_ANN" ]; then
+    echo "Found COCO train2017: $TRAIN_DIR"
+    IMG_DIR="$TRAIN_DIR"
+    ANN_FILE="$TRAIN_ANN"
 else
-    echo "COCO not found, evaluating on standard slice..."
-    python ops/run_real_detector_map.py --img-dir "$REPO" --ann-file "$REPO" --num-samples 100
+    echo "COCO not found in expected paths, searching /kaggle/input..."
+    find /kaggle/input -maxdepth 4 || true
 fi
-echo "=== Real Detector Benchmark Completed Successfully ==="
+
+if [ -n "$IMG_DIR" ] && [ -n "$ANN_FILE" ]; then
+    echo "=== Running Real Neural Object Detector (SSDLite MobileNetV3) Evaluation on COCO ==="
+    python ops/run_real_detector_map.py --img-dir "$IMG_DIR" --ann-file "$ANN_FILE" --num-samples 500
+fi
+
+echo "=== Running GPU Complexity & FPS Benchmark on Tesla T4 ==="
+python ops/benchmark_complexity.py
+
+echo "=== Saving Results to Working Dir for Direct Download ==="
+cp -r results /kaggle/working/
+ls -la /kaggle/working/results
+echo "=== All Benchmarks Completed Successfully ==="
 """
 
 nb = {
