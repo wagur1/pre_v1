@@ -45,16 +45,22 @@ def bd_rate(
     ma, lra = ma[idx_a], lra[idx_a]
     mt, lrt = mt[idx_t], lrt[idx_t]
 
-    poly_a = np.polyfit(ma, lra, deg)
-    poly_t = np.polyfit(mt, lrt, deg)
+    try:
+        poly_a = np.polyfit(ma, lra, deg)
+        poly_t = np.polyfit(mt, lrt, deg)
+    except Exception:
+        # Fallback to linear fit if high degree fails
+        poly_a = np.polyfit(ma, lra, 1)
+        poly_t = np.polyfit(mt, lrt, 1)
 
     # Integration interval: common overlap of task metrics
     min_m = max(ma[0], mt[0])
     max_m = min(ma[-1], mt[-1])
 
-    if max_m <= min_m:
-        # No overlap in accuracy range
-        return 0.0
+    if max_m <= min_m + 1e-6:
+        # No overlap or degenerate accuracy range: calculate average rate ratio
+        ratio = np.mean(rt) / (np.mean(ra) + 1e-8)
+        return float((ratio - 1.0) * 100.0)
 
     # Integrate polynomial curves
     poly_int_a = np.polyint(poly_a)

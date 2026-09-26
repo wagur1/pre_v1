@@ -33,8 +33,12 @@ class TemporalBackgroundRegularizer(nn.Module):
             return x  # Single frame / image regime: no temporal regularization
 
         b, c, t, h, w = x.shape
-        a = float(alpha) if alpha is not None else self.default_alpha
-        a = max(0.0, min(0.98, a))
+        if isinstance(alpha, torch.Tensor):
+            a = torch.clamp(alpha.view(-1, 1, 1, 1).to(device=x.device, dtype=x.dtype), 0.0, 0.98)
+        elif alpha is not None:
+            a = torch.tensor(max(0.0, min(0.98, float(alpha))), device=x.device, dtype=x.dtype)
+        else:
+            a = torch.tensor(self.default_alpha, device=x.device, dtype=x.dtype)
 
         out_frames = []
         prev_frame = x[:, :, 0]

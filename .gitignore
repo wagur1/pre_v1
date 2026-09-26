@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pth
+!checkpoints/*.pth
 *.pt
 outputs/
 .pytest_cache/

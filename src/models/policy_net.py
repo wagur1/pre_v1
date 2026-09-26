@@ -114,21 +114,19 @@ class AdaVCM(nn.Module):
         # 2. Query Adaptive Policy Net (if enabled)
         if self.policy_net is not None:
             sigma, alpha, _ = self.policy_net(x, weight_map, qp=qp)
-            sigma_val = sigma.mean().item()
-            alpha_val = alpha.mean().item()
         else:
-            sigma_val = self.spatial_filter.default_sigma
-            alpha_val = self.temporal_reg.default_alpha
+            sigma = torch.tensor(self.spatial_filter.default_sigma, device=x.device, dtype=torch.float32)
+            alpha = torch.tensor(self.temporal_reg.default_alpha, device=x.device, dtype=torch.float32)
 
         # 3. Apply Temporal Background Regularization
-        x_temporal = self.temporal_reg(x, weight_map, alpha=alpha_val)
+        x_temporal = self.temporal_reg(x, weight_map, alpha=alpha)
 
         # 4. Apply Boundary-Aware Soft Transition Spatial Filtering
-        x_out = self.spatial_filter(x_temporal, weight_map, sigma=sigma_val)
+        x_out = self.spatial_filter(x_temporal, weight_map, sigma=sigma)
 
         return {
             "preprocessed": x_out,
             "weight_map": weight_map,
-            "sigma": torch.tensor(sigma_val, device=x.device),
-            "alpha": torch.tensor(alpha_val, device=x.device),
+            "sigma": sigma,
+            "alpha": alpha,
         }

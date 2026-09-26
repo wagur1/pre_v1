@@ -102,8 +102,8 @@ class PolicyTrainer:
                 "loss": f"{loss.item():.4f}",
                 "fg_diff": f"{fg_loss.item():.5f}",
                 "rate_p": f"{rate_proxy.item():.4f}",
-                "sigma": f"{out['sigma'].item():.2f}",
-                "alpha": f"{out['alpha'].item():.2f}",
+                "sigma": f"{out['sigma'].mean().item():.2f}",
+                "alpha": f"{out['alpha'].mean().item():.2f}",
             })
 
         metrics = {

@@ -1,8 +1,8 @@
 """Real Downstream Object Detector Benchmark (COCO-2017 CTC).
 
-Evaluates real detection performance (mAP@0.5 and mAP@0.5:0.95) using a standard
-deep neural detector (Torchvision SSDLite / MobileNetV3 or Faster R-CNN)
-on reconstructed frames from Anchor vs AdaVCM across QPs [27, 32, 38, 43].
+Evaluates real detection performance (true mAP@0.5 and mAP@0.5:0.95) using a standard
+deep neural detector (Torchvision SSDLite-MobileNetV3) on reconstructed frames from
+Anchor vs AdaVCM across standard MPEG-VCM QPs [27, 32, 38, 43].
 """
 from __future__ import annotations
 
@@ -23,21 +23,8 @@ from tqdm import tqdm
 
 from src.models import AdaVCM
 from src.codecs import StandardVideoCodec
-from src.metrics import bd_rate
+from src.metrics import bd_rate, DetectionEvaluator
 from src.data import VideoTaskDataset
-
-
-def compute_iou(box1: np.ndarray, box2: np.ndarray) -> float:
-    """Compute IoU between two boxes [ymin, xmin, ymax, xmax]."""
-    y1 = max(box1[0], box2[0])
-    x1 = max(box1[1], box2[1])
-    y2 = min(box1[2], box2[2])
-    x2 = min(box1[3], box2[3])
-    inter = max(0.0, y2 - y1) * max(0.0, x2 - x1)
-    area1 = max(0.0, box1[2] - box1[0]) * max(0.0, box1[3] - box1[1])
-    area2 = max(0.0, box2[2] - box2[0]) * max(0.0, box2[3] - box2[1])
-    union = area1 + area2 - inter
-    return inter / (union + 1e-8)
 
 
 def evaluate_detector_map(
@@ -48,34 +35,64 @@ def evaluate_detector_map(
     device_str: str = "cuda",
 ):
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
-    print(f"[Detector Benchmark] Loading SSDLite-MobileNetV3 on {device}...")
+    print(f"[Detector Benchmark] Initializing on {device}...")
 
+    # 1. Load Real Object Detector
     weights = SSDLite320_MobileNet_V3_Large_Weights.DEFAULT
     detector = ssdlite320_mobilenet_v3_large(weights=weights).to(device).eval()
 
+    # 2. Load AdaVCM Model and Trained Checkpoint
     model = AdaVCM(learnable_policy=True).to(device).eval()
+    ckpt_candidates = [
+        REPO_ROOT / "checkpoints" / "adavcm_best.pth",
+        REPO_ROOT / "outputs" / "train" / "adavcm_best.pth",
+        REPO_ROOT / "outputs" / "adavcm_best.pth",
+    ]
+    loaded_ckpt = False
+    for ckpt_path in ckpt_candidates:
+        if ckpt_path.exists():
+            state = torch.load(ckpt_path, map_location=device, weights_only=False)
+            if "model_state_dict" in state:
+                model.load_state_dict(state["model_state_dict"])
+            else:
+                model.load_state_dict(state)
+            print(f"[Detector Benchmark] Successfully loaded AdaVCM checkpoint: {ckpt_path}")
+            loaded_ckpt = True
+            break
+    if not loaded_ckpt:
+        print("[Detector Benchmark] Warning: Checkpoint not found; running with default policy weights.")
+
     codec = StandardVideoCodec(codec_name="h264")
-
     dataset = VideoTaskDataset(img_dir=img_dir, ann_file=ann_file, image_size=320, max_samples=num_samples)
-    print(f"[Detector Benchmark] Dataset loaded: {len(dataset)} samples from {img_dir}")
+    print(f"[Detector Benchmark] Dataset loaded: {len(dataset)} valid samples from {img_dir}")
 
-    results = {"qps": list(qps), "anchor_bpp": [], "adavcm_bpp": [], "anchor_map50": [], "adavcm_map50": []}
+    results = {
+        "qps": list(qps),
+        "anchor_bpp": [],
+        "adavcm_bpp": [],
+        "bitrate_savings_pct": [],
+        "anchor_map50": [],
+        "adavcm_map50": [],
+        "anchor_map50_95": [],
+        "adavcm_map50_95": [],
+    }
 
     for qp in qps:
         bpp_a_list, bpp_t_list = [], []
-        matches_a, matches_t, total_gt = 0, 0, 0
+        evaluator_anchor = DetectionEvaluator()
+        evaluator_adavcm = DetectionEvaluator()
 
         for idx in tqdm(range(len(dataset)), desc=f"Detector Eval QP {qp}"):
             sample = dataset[idx]
             clip = sample["clip"].unsqueeze(0).to(device)  # [1, C, 1, H, W]
-            gt_boxes = sample["boxes"]
+            gt_boxes = sample["boxes"]  # List of [x1, y1, x2, y2] in pixel coords [0, 320]
             boxes_arg = [gt_boxes] if (gt_boxes is not None and len(gt_boxes) > 0) else None
 
-            # Anchor encode/decode
+            # 1. Anchor encode/decode
             rec_a, bpp_a = codec.encode_decode_clip(clip.squeeze(0), qp=qp)
             bpp_a_list.append(bpp_a)
 
-            # AdaVCM encode/decode
+            # 2. AdaVCM encode/decode
             with torch.no_grad():
                 out = model(clip, boxes=boxes_arg, qp=float(qp))
                 prep_clip = out["preprocessed"].squeeze(0)
@@ -83,51 +100,68 @@ def evaluate_detector_map(
             rec_t, bpp_t = codec.encode_decode_clip(prep_clip, qp=qp)
             bpp_t_list.append(bpp_t)
 
-            # Run detector on both decoded frames
+            # 3. Feed decoded frames to detector as List[Tensor[C, H, W]]
             with torch.no_grad():
-                pred_a = detector(rec_a.squeeze(1).to(device))[0]
-                pred_t = detector(rec_t.squeeze(1).to(device))[0]
+                frame_a = rec_a.squeeze(1).squeeze(0).to(device)  # [C, H, W]
+                frame_t = rec_t.squeeze(1).squeeze(0).to(device)  # [C, H, W]
 
-            # Evaluate Detection Hits @ IoU >= 0.5
-            if gt_boxes is not None and len(gt_boxes) > 0:
-                h_img, w_img = 320, 320
-                for gb in gt_boxes:
-                    total_gt += 1
-                    gb_abs = [gb[0] * h_img, gb[1] * w_img, gb[2] * h_img, gb[3] * w_img]
+                pred_a = detector([frame_a])[0]
+                pred_t = detector([frame_t])[0]
 
-                    # Check hit in Anchor
-                    hit_a = any(compute_iou(gb_abs, pb.cpu().numpy()) >= 0.5 for pb in pred_a["boxes"][:10])
-                    if hit_a:
-                        matches_a += 1
+            # 4. Accumulate for standard COCO/Pascal VOC mAP calculation
+            gt_arr = np.array(gt_boxes, dtype=np.float32) if (gt_boxes and len(gt_boxes) > 0) else np.empty((0, 4), dtype=np.float32)
 
-                    # Check hit in AdaVCM
-                    hit_t = any(compute_iou(gb_abs, pb.cpu().numpy()) >= 0.5 for pb in pred_t["boxes"][:10])
-                    if hit_t:
-                        matches_t += 1
+            evaluator_anchor.add_image_eval(
+                gt_boxes=gt_arr,
+                pred_boxes=pred_a["boxes"].cpu().numpy(),
+                pred_scores=pred_a["scores"].cpu().numpy(),
+            )
+            evaluator_adavcm.add_image_eval(
+                gt_boxes=gt_arr,
+                pred_boxes=pred_t["boxes"].cpu().numpy(),
+                pred_scores=pred_t["scores"].cpu().numpy(),
+            )
 
-        map_a = matches_a / max(1, total_gt)
-        map_t = matches_t / max(1, total_gt)
+        # Compute true AP@50 and AP@50:95
+        res_a = evaluator_anchor.evaluate()
+        res_t = evaluator_adavcm.evaluate()
+
         avg_bpp_a = float(np.mean(bpp_a_list))
         avg_bpp_t = float(np.mean(bpp_t_list))
+        rate_save = (1.0 - avg_bpp_t / avg_bpp_a) * 100.0
 
         results["anchor_bpp"].append(avg_bpp_a)
         results["adavcm_bpp"].append(avg_bpp_t)
-        results["anchor_map50"].append(float(map_a))
-        results["adavcm_map50"].append(float(map_t))
+        results["bitrate_savings_pct"].append(rate_save)
+        results["anchor_map50"].append(res_a["map50"])
+        results["adavcm_map50"].append(res_t["map50"])
+        results["anchor_map50_95"].append(res_a["map50_95"])
+        results["adavcm_map50_95"].append(res_t["map50_95"])
 
-        rate_save = (1.0 - avg_bpp_t / avg_bpp_a) * 100.0
-        print(f"\n[QP {qp}] Anchor: {avg_bpp_a:.4f} bpp, mAP50: {map_a:.4f} | AdaVCM: {avg_bpp_t:.4f} bpp, mAP50: {map_t:.4f} | Bitrate Saving: {rate_save:+.2f}%")
+        print(f"\n[QP {qp:2d}] Anchor: {avg_bpp_a:.4f} bpp, mAP50: {res_a['map50']:.4f}, mAP50:95: {res_a['map50_95']:.4f}")
+        print(f"        AdaVCM: {avg_bpp_t:.4f} bpp, mAP50: {res_t['map50']:.4f}, mAP50:95: {res_t['map50_95']:.4f}")
+        print(f"        Bitrate Saving: {rate_save:+.2f}%\n")
 
-    # Real Detector BD-Rate
-    bdr = bd_rate(results["anchor_bpp"], results["anchor_map50"], results["adavcm_bpp"], results["adavcm_map50"])
-    results["bd_rate_map50_pct"] = bdr
-    print(f"\n{'='*50}\nFINAL REAL DETECTOR BD-RATE (mAP@0.5): {bdr:+.2f}%\n{'='*50}")
+    # True Detector BD-Rates
+    bdr_50 = bd_rate(results["anchor_bpp"], results["anchor_map50"], results["adavcm_bpp"], results["adavcm_map50"])
+    bdr_50_95 = bd_rate(results["anchor_bpp"], results["anchor_map50_95"], results["adavcm_bpp"], results["adavcm_map50_95"])
+
+    results["bd_rate_map50_pct"] = bdr_50
+    results["bd_rate_map50_95_pct"] = bdr_50_95
+
+    print("=" * 65)
+    print(f"REAL DETECTOR EVALUATION COMPLETE")
+    print(f"  BD-Rate (mAP@0.5)     : {bdr_50:+.2f}%")
+    print(f"  BD-Rate (mAP@0.5:0.95): {bdr_50_95:+.2f}%")
+    print(f"  Average Bitrate Saving: {np.mean(results['bitrate_savings_pct']):+.2f}%")
+    print("=" * 65)
 
     out_file = REPO_ROOT / "results" / "real_detector_map_results.json"
     out_file.parent.mkdir(parents=True, exist_ok=True)
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)
     print(f"[Done] Real detector results saved to {out_file}")
+    return results
 
 
 if __name__ == "__main__":

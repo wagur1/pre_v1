@@ -83,3 +83,20 @@ def test_bd_rate_calculation():
     mt = [0.40, 0.50, 0.60, 0.70]
     bd = bd_rate(ra, ma, rt, mt)
     assert bd < -15.0 and bd > -25.0
+
+
+def test_policy_net_gradient_flow():
+    """Verify that gradients flow differentiably through AdaVCM into PolicyNet parameters."""
+    model = AdaVCM(learnable_policy=True)
+    x = torch.rand(2, 3, 3, 32, 32, requires_grad=True)
+    res = model(x, qp=32.0)
+    loss = res["preprocessed"].sum()
+    loss.backward()
+
+    # Verify that PolicyNet parameters received gradients
+    has_grad = False
+    for name, p in model.policy_net.named_parameters():
+        if p.grad is not None and p.grad.abs().sum() > 0:
+            has_grad = True
+            break
+    assert has_grad, "PolicyNet failed to receive gradients from preprocessed output!"

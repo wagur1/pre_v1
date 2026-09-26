@@ -18,24 +18,29 @@ class BoundaryAwareFilter(nn.Module):
         super().__init__()
         self.default_sigma = default_sigma
 
-    def _gaussian_blur(self, x: torch.Tensor, sigma: float) -> torch.Tensor:
-        """Apply separable Gaussian blur to [B, C, T, H, W] tensor."""
-        if sigma <= 0.1:
-            return x
+    def _gaussian_blur(self, x: torch.Tensor, sigma: torch.Tensor | float) -> torch.Tensor:
+        """Apply separable Gaussian blur differentiably to [B, C, T, H, W] tensor."""
+        if not isinstance(sigma, torch.Tensor):
+            sigma_t = torch.tensor(float(sigma), dtype=torch.float32, device=x.device)
+        else:
+            sigma_t = sigma.mean().to(device=x.device, dtype=torch.float32)
+
+        sigma_clamped = torch.clamp(sigma_t, min=0.5, max=16.0)
+
         b, c, t, h, w = x.shape
         flat = x.permute(0, 2, 1, 3, 4).reshape(b * t, c, h, w)
-        k = int(2 * round(2 * sigma) + 1)
-        k = max(3, k if k % 2 == 1 else k + 1)
-        pad = k // 2
 
-        coords = torch.arange(k, dtype=torch.float32, device=x.device) - pad
-        g = torch.exp(-0.5 * (coords / sigma).square())
-        g = g / g.sum()
+        # Fixed padding radius for differentiable convolution
+        pad = 7
+        k = 2 * pad + 1
+
+        coords = torch.arange(-pad, pad + 1, dtype=torch.float32, device=x.device)
+        g = torch.exp(-0.5 * (coords / sigma_clamped).square())
+        g = g / (g.sum() + 1e-8)
 
         v_kernel = g.view(1, 1, k, 1).expand(c, 1, k, 1).contiguous()
         h_kernel = g.view(1, 1, 1, k).expand(c, 1, 1, k).contiguous()
 
-        # Reflect padding if dimension allows, else replicate
         pad_mode_v = "reflect" if pad < h else "replicate"
         pad_mode_h = "reflect" if pad < w else "replicate"
 
@@ -63,11 +68,10 @@ class BoundaryAwareFilter(nn.Module):
         if weight_map.ndim == 4:
             weight_map = weight_map.unsqueeze(2)
 
-        s = float(sigma) if sigma is not None else self.default_sigma
-        if s <= 0.0:
-            return x
+        if sigma is None:
+            sigma = self.default_sigma
 
-        blurred = self._gaussian_blur(x, s)
+        blurred = self._gaussian_blur(x, sigma)
         # Non-linear boundary smoothing
         w_smooth = torch.clamp(weight_map, 0.0, 1.0)
         if edge_power != 1.0:

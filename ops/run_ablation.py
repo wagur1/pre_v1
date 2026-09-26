@@ -35,7 +35,14 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
     codec = StandardVideoCodec(codec_name="h264")
     qps = [27, 32, 38, 43]
 
-    model_full = AdaVCM(learnable_policy=True).to(device).eval()
+    model_full = AdaVCM(learnable_policy=True).to(device)
+    for p in [REPO_ROOT / "outputs/train/adavcm_best.pth", Path("outputs/train/adavcm_best.pth")]:
+        if p.exists():
+            state = torch.load(p, map_location=device, weights_only=False)
+            model_full.load_state_dict(state.get("model_state_dict", state))
+            print(f"[Ablation] Successfully loaded trained checkpoint: {p}")
+            break
+    model_full.eval()
 
     variants = ["anchor", "full_adavcm", "no_tbr", "hard_mask", "fixed_params"]
     rates = {v: [] for v in variants}

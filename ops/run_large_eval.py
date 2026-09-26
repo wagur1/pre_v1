@@ -41,7 +41,14 @@ def evaluate_1000(
     dataset = VideoTaskDataset(img_dir=img_dir, ann_file=ann_file, image_size=320, max_samples=num_samples)
     print(f"[Large Eval] Loaded {len(dataset)} valid images from {img_dir}")
 
-    model = AdaVCM(learnable_policy=True).to(device).eval()
+    model = AdaVCM(learnable_policy=True).to(device)
+    for p in [REPO_ROOT / "outputs/train/adavcm_best.pth", Path("outputs/train/adavcm_best.pth")]:
+        if p.exists():
+            state = torch.load(p, map_location=device, weights_only=False)
+            model.load_state_dict(state.get("model_state_dict", state))
+            print(f"[Large Eval] Successfully loaded trained checkpoint: {p}")
+            break
+    model.eval()
 
     codecs = ["h264", "h265"]
     results = {}

@@ -25,10 +25,11 @@ def main():
     print(f"[AdaVCM Eval] Using device: {device} | Codec: {args.codec} | QPs: {qps}")
 
     model = AdaVCM(learnable_policy=True)
-    if args.checkpoint and Path(args.checkpoint).exists():
-        ckpt = torch.load(args.checkpoint, map_location=device)
-        model.load_state_dict(ckpt["model_state_dict"])
-        print(f"[AdaVCM Eval] Loaded checkpoint: {args.checkpoint}")
+    ckpt_path = args.checkpoint or "outputs/train/adavcm_best.pth"
+    if Path(ckpt_path).exists():
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt.get("model_state_dict", ckpt))
+        print(f"[AdaVCM Eval] Loaded checkpoint: {ckpt_path}")
     model.to(device).eval()
 
     dataset = SyntheticVCMDataset(num_samples=10, num_frames=8, size=256)
