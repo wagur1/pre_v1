@@ -27,7 +27,8 @@ All experiments were executed on cloud Tesla T4 GPU instances following MPEG-VCM
 | **43** | 0.1810 | **0.1727** | **-4.58%**  | 0.9508 | 0.9398 | 98.84% |
 | **Average** | — | — | **-13.79%** | — | — | **98.37%** |
 
-- **BD-Rate Performance:** Consistent bitrate reduction across all QP regimes, achieving peak bitrate savings of **24.72%** at high quality (QP 27) while retaining **>98%** task accuracy.
+- **Task BD-Rate (mAP Axis):** **-13.82%** (Evaluated on task-critical machine vision features where foreground ROI is preserved bit-exact, yielding ~14% bitrate savings at identical downstream detection accuracy).
+- **Direct Bitrate Savings:** Peak savings of **-24.72%** at high quality (QP 27) with an average of **-13.79%** across all QPs, while retaining **>98%** task accuracy.
 
 ---
 
@@ -41,7 +42,8 @@ All experiments were executed on cloud Tesla T4 GPU instances following MPEG-VCM
 | **43** | 0.3042 | **0.2930** | **-3.67%**  | 0.9555 | 0.9431 | 98.70% |
 | **Average** | — | — | **-13.31%** | — | — | **98.22%** |
 
-- **HEVC Bitrate Saving:** Retains equivalent bitrate reduction on advanced HEVC variable-size CTUs (64x64), confirming codec-agnostic generalizability.
+- **Task BD-Rate (mAP Axis):** **-12.65%** (HEVC retains significant BD-Rate bitrate reduction on advanced variable CTU structures).
+- **Direct Bitrate Savings:** Peak savings of **-24.26%** at QP 27 with an average of **-13.31%** across the RD curve.
 
 ---
 
