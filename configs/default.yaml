@@ -1,7 +1,7 @@
 # Default Configuration for AdaVCM
 model:
   dilate_radius: 5
-  default_sigma: 6.0
+  default_sigma: 3.5
   default_alpha: 0.85
   learnable_policy: true
 

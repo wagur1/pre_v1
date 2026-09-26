@@ -1,7 +1,7 @@
 # Kaggle Training Configuration for AdaVCM
 model:
   dilate_radius: 6
-  default_sigma: 8.0
+  default_sigma: 3.5
   default_alpha: 0.88
   learnable_policy: true
 

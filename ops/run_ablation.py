@@ -4,7 +4,7 @@ Evaluates 4 configurations to isolate each module's contribution:
 1. Full AdaVCM (Proposed): Adaptive PolicyNet + Soft Sigmoid Filter + TBR
 2. No-TBR: Adaptive PolicyNet + Soft Sigmoid Filter (temporal alpha = 0.0)
 3. Hard-Mask: Binary step boundary (W in {0, 1}) without smooth sigmoid transition
-4. Fixed-Params: Static sigma=6.0 and static TBR alpha=0.85 (No PolicyNet)
+4. Fixed-Params: Static sigma=5.0 and static TBR alpha=0.85 (No PolicyNet)
 """
 from __future__ import annotations
 
@@ -104,9 +104,9 @@ def run_ablation(img_dir: str | None = None, ann_file: str | None = None, num_sa
             temp_rates["hard_mask"].append(bpp_hard)
             temp_accs["hard_mask"].append(acc_hard)
 
-            # 5. Fixed params (Static sigma=6.0 + Static TBR alpha=0.85, without policy adaptation)
+            # 5. Fixed params (Static sigma=5.0 + Static TBR alpha=0.85, without policy adaptation)
             with torch.no_grad():
-                x_fixed_spatial = model_full.spatial_filter(clip, w_map, sigma=6.0)
+                x_fixed_spatial = model_full.spatial_filter(clip, w_map, sigma=5.0)
                 prep_fixed = model_full.temporal_reg(x_fixed_spatial, w_map, alpha=0.85).squeeze(0)
             rec_fixed, bpp_fixed = codec.encode_decode_clip(prep_fixed, qp=qp)
             acc_fixed = 1.0 - float(torch.abs(rec_fixed - clip.squeeze(0)).mean().item()) * 0.2
