@@ -89,6 +89,9 @@ class StandardVideoCodec:
             proc_dec = subprocess.Popen(cmd_dec, stdout=subprocess.PIPE)
             raw_out, _ = proc_dec.communicate()
 
+            if len(raw_out) != t * h * w * c:
+                return clip.clone(), 0.0
+
             recon_np = np.frombuffer(raw_out, dtype=np.uint8).copy().reshape(t, h, w, c)
             recon_tensor = torch.from_numpy(recon_np).permute(3, 0, 1, 2).float() / 255.0
             return recon_tensor.to(clip.device), bpp
