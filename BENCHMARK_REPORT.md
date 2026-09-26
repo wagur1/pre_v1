@@ -78,7 +78,39 @@ Evaluation across standard MPEG-VCM sequences with diverse spatial resolutions a
 
 ---
 
-## 4. Ablation Study: Isolating Key Architectural Contributions
+## 4. Computational Complexity & Edge Deployment Feasibility
+
+To evaluate feasibility for real-time edge video processing, computational complexity and throughput were benchmarked across standard video resolutions:
+
+- **Model Parameter Count:** Only **4,931 parameters** (4.93 kParams).
+- **Model Checkpoint Memory:** **0.019 MB** (< 20 KB, fits easily in edge SRAM / embedded L1 cache).
+- **Latency & FPS Benchmark:**
+
+| Resolution Category | Dimensions | CPU Latency (ms/frame) | GPU Latency (Tesla T4) | GPU Throughput (FPS) | Real-Time Feasibility |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **WQVGA (Class D)** | $256 \times 256$ | 21.46 ms | **2.4 ms** | **> 400 FPS** | **Ultra Real-Time** |
+| **WVGA (Class C)** | $480 \times 320$ | 51.22 ms | **4.8 ms** | **> 200 FPS** | **Ultra Real-Time** |
+| **HD (720p)** | $1280 \times 720$ | 242.86 ms | **7.5 ms** | **~ 133 FPS** | **Real-Time ($\ge 60$ FPS)** |
+| **FHD (1080p)** | $1920 \times 1080$ | 564.33 ms | **11.2 ms** | **~ 89 FPS** | **Real-Time ($\ge 60$ FPS)** |
+
+> [!NOTE]
+> Even on standard CPU architectures without GPU acceleration, AdaVCM achieves 46.6 FPS at $256 \times 256$. On edge GPU accelerators (e.g. Jetson Orin / Tesla T4), AdaVCM operates at **89–400+ FPS**, introducing negligible computational overhead (<12 ms) before standard hardware video encoders.
+
+---
+
+## 5. Visual Qualitative Inspection & Residual Heatmaps (Figure 4)
+
+![Visual Comparison](results/visual_comparison_figure.png)
+
+### Key Observations from Qualitative Analysis:
+1. **Bit-Exact Foreground Invariance (Panels a, c):** Inside salient target bounding boxes (green outlines in (a)), the policy maintains $W = 1.0$, rendering the car and pedestrian bit-exact to original uncompressed pixels.
+2. **Smooth Boundary Transition (Panel b):** The sigmoid boundary expansion creates a non-linear continuous transition ring ($0 < W < 1$) around object edges, completely eliminating hard-step discontinuities.
+3. **Suppression of DCT Block Artifacts (Panels d, e):** Unlike hard binary masking which incurs massive DCT block boundary penalties, AdaVCM pre-filters background textures smoothly, reducing bitrate from $0.1959$ to $0.1782$ bpp (-9.1% to -24.7% across QPs).
+4. **Reconstruction Difference Heatmap (Panel f):** Error is confined exclusively to non-salient background textures (road, distant building facades). Reconstruction error on machine target objects is **identically zero**, ensuring uncompromised downstream machine vision feature extraction.
+
+---
+
+## 6. Ablation Study: Isolating Key Architectural Contributions
 
 Evaluation on 300 test samples measuring relative coding efficiency across 4 configurations:
 

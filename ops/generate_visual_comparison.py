@@ -62,10 +62,10 @@ def create_realistic_vcm_scene() -> tuple[torch.Tensor, list[list[float]]]:
 
     tensor = torch.from_numpy(img_np).permute(2, 0, 1).unsqueeze(0).unsqueeze(2)  # [1, 3, 1, H, W]
 
-    # Ground truth bounding boxes in [ymin, xmin, ymax, xmax]
+    # Ground truth bounding boxes in absolute pixel coordinates [x1, y1, x2, y2]
     boxes = [
-        [155 / h, 115 / w, 285 / h, 265 / w],  # Car
-        [125 / h, 310 / w, 275 / h, 350 / w],  # Pedestrian
+        [115.0, 155.0, 265.0, 285.0],  # Car
+        [310.0, 125.0, 350.0, 275.0],  # Pedestrian
     ]
     return tensor, boxes
 
@@ -82,7 +82,7 @@ def generate_visual_comparison():
     with torch.no_grad():
         out = model(clip, boxes=[boxes], qp=float(qp))
         prep_clip = out["preprocessed"].squeeze(0)
-        w_map = out["saliency_map"].squeeze().cpu().numpy()
+        w_map = out["weight_map"].squeeze().cpu().numpy()
 
     raw_frame = clip.squeeze().permute(1, 2, 0).numpy()
     prep_frame = prep_clip.squeeze().permute(1, 2, 0).numpy()
@@ -106,9 +106,8 @@ def generate_visual_comparison():
     axes[0, 0].imshow(raw_frame)
     axes[0, 0].set_title("(a) Original Uncompressed Frame", fontsize=12, fontweight="bold")
     # Draw GT box outlines
-    h, w, _ = raw_frame.shape
     for b in boxes:
-        rect = plt.Rectangle((b[1] * w, b[0] * h), (b[3] - b[1]) * w, (b[2] - b[0]) * h,
+        rect = plt.Rectangle((b[0], b[1]), b[2] - b[0], b[3] - b[1],
                              fill=False, edgecolor="#00ff00", linewidth=2.0, linestyle="--")
         axes[0, 0].add_patch(rect)
     axes[0, 0].axis("off")

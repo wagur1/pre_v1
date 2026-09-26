@@ -1,0 +1,40 @@
+{
+  "device": "cpu",
+  "total_params": 4931,
+  "policy_params": 4931,
+  "memory_mb": 0.0188,
+  "benchmarks": [
+    {
+      "resolution": "WQVGA (256x256)",
+      "height": 256,
+      "width": 256,
+      "latency_ms_per_frame": 21.46,
+      "fps": 46.6,
+      "realtime": true
+    },
+    {
+      "resolution": "WVGA (480x320)",
+      "height": 320,
+      "width": 480,
+      "latency_ms_per_frame": 51.22,
+      "fps": 19.5,
+      "realtime": false
+    },
+    {
+      "resolution": "HD (720p - 1280x720)",
+      "height": 720,
+      "width": 1280,
+      "latency_ms_per_frame": 242.86,
+      "fps": 4.1,
+      "realtime": false
+    },
+    {
+      "resolution": "FHD (1080p - 1920x1080)",
+      "height": 1080,
+      "width": 1920,
+      "latency_ms_per_frame": 564.33,
+      "fps": 1.8,
+      "realtime": false
+    }
+  ]
+}
