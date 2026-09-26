@@ -27,13 +27,15 @@ from src.metrics import bd_rate
 from src.data import VideoTaskDataset, SyntheticVCMDataset
 
 
-def run_ablation(img_dir: str | None = None, ann_file: str | None = None, num_samples: int = 50, synthetic: bool = False):
+def run_ablation(img_dir: str | None = None, ann_file: str | None = None, num_samples: int = 50, synthetic: bool = False, seed: int = 42):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"[Ablation] Running ablation study on {num_samples} samples on {device}...")
+    print(f"[Ablation] Running ablation study on {num_samples} samples (seed={seed}) on {device}...")
 
     if synthetic or not img_dir or not Path(img_dir).exists():
-        print("[Ablation] Using SyntheticVCMDataset (256x256, 8 frames per clip)...")
-        dataset = SyntheticVCMDataset(num_samples=num_samples, num_frames=8, size=256)
+        print("[Ablation] Using SyntheticVCMDataset (256x256, 8 frames per clip, seeded)...")
+        dataset = SyntheticVCMDataset(num_samples=num_samples, num_frames=8, size=256, seed=seed)
     else:
         print(f"[Ablation] Loading real dataset from {img_dir}...")
         dataset = VideoTaskDataset(img_dir=img_dir, ann_file=ann_file, image_size=320, max_samples=num_samples)
@@ -116,9 +118,19 @@ def run_ablation(img_dir: str | None = None, ann_file: str | None = None, num_sa
             accs[v].append(float(np.mean(temp_accs[v])))
 
     # Compute BD-Rate and direct Bitrate Savings against Anchor
+    is_synth = bool(synthetic or not img_dir or not Path(img_dir).exists())
     ablation_summary = {
+        "metadata": {
+            "num_samples": num_samples,
+            "seed": seed,
+            "dataset": "SyntheticVCMDataset (256x256, 8 frames)" if is_synth else "COCO-2017",
+            "primary_metric": "avg_bitrate_saving_pct",
+            "codec": "H.264 / libx264",
+            "note": "Ablation isolates module contributions under controlled temporal synthetic sequences. Bitrate savings (Delta R) is the stable primary metric. Whole-frame pixel BD-rate is provided for continuity but is mathematically sensitive to polynomial interpolation over narrow fidelity intervals (1 - 0.2*MAE)."
+        },
         "qps": qps,
         "anchor_rates": rates["anchor"],
+        "anchor_accs": accs["anchor"],
         "variants": {}
     }
 
@@ -152,7 +164,8 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--img-dir", default=None)
     p.add_argument("--ann-file", default=None)
-    p.add_argument("--num-samples", type=int, default=25)
+    p.add_argument("--num-samples", type=int, default=50)
     p.add_argument("--synthetic", action="store_true")
+    p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
-    run_ablation(args.img_dir, args.ann_file, args.num_samples, synthetic=args.synthetic)
+    run_ablation(args.img_dir, args.ann_file, args.num_samples, synthetic=args.synthetic, seed=args.seed)

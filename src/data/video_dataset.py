@@ -19,17 +19,22 @@ from PIL import Image
 class SyntheticVCMDataset(Dataset):
     """Generates synthetic video clips with foreground moving shapes for testing."""
 
-    def __init__(self, num_samples: int = 50, num_frames: int = 8, size: int = 256):
+    def __init__(self, num_samples: int = 50, num_frames: int = 8, size: int = 256, seed: int | None = 42):
         self.num_samples = num_samples
         self.num_frames = num_frames
         self.size = size
+        self.seed = seed
 
     def __len__(self) -> int:
         return self.num_samples
 
     def __getitem__(self, idx: int) -> dict:
-        # Background: noisy texture
-        bg = torch.rand(3, self.num_frames, self.size, self.size) * 0.3
+        # Background: noisy texture (seeded for bit-exact reproducibility)
+        if self.seed is not None:
+            gen = torch.Generator().manual_seed(self.seed + idx)
+            bg = torch.rand(3, self.num_frames, self.size, self.size, generator=gen) * 0.3
+        else:
+            bg = torch.rand(3, self.num_frames, self.size, self.size) * 0.3
         # Foreground: moving bright square
         x_start = (idx * 7) % (self.size - 60)
         y_start = (idx * 11) % (self.size - 60)
