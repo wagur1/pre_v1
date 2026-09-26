@@ -73,17 +73,18 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
             temp_rates["full_adavcm"].append(bpp_full)
             temp_accs["full_adavcm"].append(acc_full)
 
-            # 3. No TBR (temporal alpha = 0)
+            # 3. No TBR (Policy adapts sigma, but temporal alpha = 0.0)
             with torch.no_grad():
                 w_map = model_full.salience_estimator(clip, boxes=boxes_arg)
-                sigma = model_full.spatial_filter.default_sigma
-                prep_notbr = model_full.spatial_filter(clip, w_map, sigma=sigma).squeeze(0)
+                out_policy = model_full.policy_net(qp=float(qp))
+                sigma_dyn = out_policy["sigma"]
+                prep_notbr = model_full.spatial_filter(clip, w_map, sigma=sigma_dyn).squeeze(0)
             rec_notbr, bpp_notbr = codec.encode_decode_clip(prep_notbr, qp=qp)
             acc_notbr = 1.0 - float(torch.abs(rec_notbr - clip.squeeze(0)).mean().item())
             temp_rates["no_tbr"].append(bpp_notbr)
             temp_accs["no_tbr"].append(acc_notbr)
 
-            # 4. Hard Mask (Step cutoff)
+            # 4. Hard Mask (Step cutoff without smooth sigmoid boundary)
             with torch.no_grad():
                 hard_w = (w_map >= 0.5).float()
                 prep_hard = (clip * hard_w + 0.5 * (1.0 - hard_w)).squeeze(0)
@@ -92,9 +93,10 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
             temp_rates["hard_mask"].append(bpp_hard)
             temp_accs["hard_mask"].append(acc_hard)
 
-            # 5. Fixed params (No policy)
+            # 5. Fixed params (Static sigma=6.0 + Static TBR alpha=0.85, without policy adaptation)
             with torch.no_grad():
-                prep_fixed = model_full.spatial_filter(clip, w_map, sigma=6.0).squeeze(0)
+                x_fixed_spatial = model_full.spatial_filter(clip, w_map, sigma=6.0)
+                prep_fixed = model_full.temporal_reg(x_fixed_spatial, w_map, alpha=0.85).squeeze(0)
             rec_fixed, bpp_fixed = codec.encode_decode_clip(prep_fixed, qp=qp)
             acc_fixed = 1.0 - float(torch.abs(rec_fixed - clip.squeeze(0)).mean().item())
             temp_rates["fixed_params"].append(bpp_fixed)
@@ -111,8 +113,15 @@ def run_ablation(img_dir: str, ann_file: str, num_samples: int = 300):
     print("=" * 50)
     for v in ["full_adavcm", "no_tbr", "hard_mask", "fixed_params"]:
         bd = bd_rate(rates["anchor"], accs["anchor"], rates[v], accs[v])
-        ablation_summary[v] = bd
-        print(f"Variant: {v:15s} | BD-Rate: {bd:+.2f}%")
+        rate_savings = [(1.0 - rv / (ra + 1e-8)) * 100.0 for ra, rv in zip(rates["anchor"], rates[v])]
+        mean_saving = float(np.mean(rate_savings))
+        ablation_summary[v] = {
+            "bd_rate_pct": bd,
+            "avg_bitrate_saving_pct": mean_saving,
+            "rates_bpp": rates[v],
+            "accs": accs[v],
+        }
+        print(f"Variant: {v:15s} | Avg Bitrate Saving: {mean_saving:+.2f}% | BD-Rate: {bd:+.2f}%")
     print("=" * 50)
 
     out_file = Path("outputs/ablation_study_results.json")

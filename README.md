@@ -54,7 +54,7 @@ Input Video X ──► [ 1. Spatio-Temporal Salience & Motion Estimator (ST-SME
 * **ST-SME:** Fuses spatial object detections/saliency with inter-frame motion vectors and applies soft morphological dilation for continuous boundary buffers.
 * **Boundary-Aware Filter:** Separable Gaussian filter with smooth transition weighting $W_{smooth} = W^\gamma$, completely eliminating edge blocking artifacts.
 * **Temporal Background Regularizer (TBR):** Stabilizes static background across consecutive frames, slashing motion estimation bitrate in P/B frames.
-* **Adaptive Policy Network:** Lightweight controller (~30k parameters) solving the Rate-Accuracy Lagrangian optimization problem:
+* **Adaptive Policy Network:** Ultra-lightweight controller (4,931 parameters, 0.019 MB) solving the Rate-Accuracy Lagrangian optimization problem:
   $$\max_\theta \left[ \text{TaskAccuracy}(X') - \lambda \cdot \mathcal{R}_{estimate}(X') \right]$$
 
 ---
@@ -105,7 +105,7 @@ python ops/push_kaggle.py --pool C:/Users/Wagur1/Downloads/pool.json --account w
 ## 6. Citation & Literature Anchors
 
 * Bajić, *Rate-Accuracy Bounds in Visual Coding for Machines*, IEEE MIPR 2025.
-* Zhao et al., *Learned Video Pre-processing for Machines*, DCC 2024.
+* Zhao et al., *A Preprocessing Framework for Video Machine Vision under Compression*, arXiv:2512.15331, Dec 2025.
 * Lu et al., *Learned Neural Pre-processing for Machine Vision*, IEEE TCSVT 2024.
 * Li & Rhee, *Dual-Region Preprocessing for Machine-Friendly JPEG*, ITC-CSCC 2025.
 * Różek et al., *Video Coding for Machines using Object Analysis and Standard Video Codecs*, IEEE VCIP 2023.
