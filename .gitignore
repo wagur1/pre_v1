@@ -7,4 +7,5 @@ outputs/
 .pytest_cache/
 ops/_push/
 kaggle_output/
+results_overnight/
 .env
