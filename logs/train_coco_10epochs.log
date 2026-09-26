@@ -4,63 +4,56 @@ Account: wagur124705
 Kernel: adavcm-adaptive-vcm-train
 Dataset: COCO-2017 Train (10,000 real images)
 Annotations: instances_train2017.json
-Hyperparameters: batch_size=16, epochs=10, optimizer=AdamW, lr=1e-4
-Loss Objective: L = L_task + lambda * R_proxy
+Hyperparameters: batch_size=16, epochs=10, optimizer=AdamW, lr=3e-4
+Loss Objective: L = L_task + lambda * (qp/35) * R_proxy
 Steps per Epoch: 625 batches (Total: 6,250 gradient steps)
 ======================================================================
 
 --- Epoch 1 / 10 ---
-Final batch: Epoch 1: 100%|==========| 625/625 [01:11<00:00,  8.71it/s, loss=0.0022, fg_diff=0.00024, rate_p=0.0040, sigma=9.00, alpha=0.47]
-Summary: [Epoch 1] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 1: 100%|==========| 625/625 [02:11<00:00,  4.74it/s, loss=0.0027, fg_diff=0.00020, rate_p=0.0056, sigma=15.44, alpha=0.47]
+Summary: [Epoch 1] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 2 / 10 ---
-Final batch: Epoch 2: 100%|==========| 625/625 [00:42<00:00, 14.58it/s, loss=0.0019, fg_diff=0.00022, rate_p=0.0034, sigma=9.00, alpha=0.47]
-Summary: [Epoch 2] Loss: 0.0022 | FG Diff: 0.000245 | Rate Proxy: 0.0039
+Final batch: Epoch 2: 100%|==========| 625/625 [01:01<00:00, 10.22it/s, loss=0.0026, fg_diff=0.00015, rate_p=0.0040, sigma=15.78, alpha=0.47]
+Summary: [Epoch 2] Loss: 0.0030 | FG Diff: 0.000194 | Rate Proxy: 0.0057
 
 --- Epoch 3 / 10 ---
-Final batch: Epoch 3: 100%|==========| 625/625 [00:43<00:00, 14.35it/s, loss=0.0024, fg_diff=0.00026, rate_p=0.0044, sigma=9.00, alpha=0.47]
-Summary: [Epoch 3] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 3: 100%|==========| 625/625 [01:04<00:00,  9.63it/s, loss=0.0027, fg_diff=0.00026, rate_p=0.0064, sigma=15.87, alpha=0.47]
+Summary: [Epoch 3] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 4 / 10 ---
-Final batch: Epoch 4: 100%|==========| 625/625 [00:43<00:00, 14.22it/s, loss=0.0023, fg_diff=0.00023, rate_p=0.0042, sigma=9.00, alpha=0.47]
-Summary: [Epoch 4] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 4: 100%|==========| 625/625 [00:56<00:00, 11.12it/s, loss=0.0026, fg_diff=0.00017, rate_p=0.0062, sigma=15.92, alpha=0.47]
+Summary: [Epoch 4] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 5 / 10 ---
-Final batch: Epoch 5: 100%|==========| 625/625 [00:43<00:00, 14.44it/s, loss=0.0019, fg_diff=0.00022, rate_p=0.0034, sigma=9.00, alpha=0.47]
-Summary: [Epoch 5] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 5: 100%|==========| 625/625 [00:56<00:00, 11.08it/s, loss=0.0022, fg_diff=0.00018, rate_p=0.0053, sigma=15.95, alpha=0.47]
+Summary: [Epoch 5] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 6 / 10 ---
-Final batch: Epoch 6: 100%|==========| 625/625 [00:43<00:00, 14.43it/s, loss=0.0018, fg_diff=0.00024, rate_p=0.0032, sigma=9.00, alpha=0.47]
-Summary: [Epoch 6] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 6: 100%|==========| 625/625 [00:54<00:00, 11.40it/s, loss=0.0028, fg_diff=0.00018, rate_p=0.0042, sigma=15.98, alpha=0.47]
+Summary: [Epoch 6] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 7 / 10 ---
-Final batch: Epoch 7: 100%|==========| 625/625 [00:43<00:00, 14.52it/s, loss=0.0022, fg_diff=0.00025, rate_p=0.0038, sigma=9.00, alpha=0.47]
-Summary: [Epoch 7] Loss: 0.0022 | FG Diff: 0.000246 | Rate Proxy: 0.0039
+Final batch: Epoch 7: 100%|==========| 625/625 [00:54<00:00, 11.55it/s, loss=0.0026, fg_diff=0.00021, rate_p=0.0061, sigma=15.97, alpha=0.47]
+Summary: [Epoch 7] Loss: 0.0030 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 8 / 10 ---
-Final batch: Epoch 8: 100%|==========| 625/625 [00:43<00:00, 14.50it/s, loss=0.0025, fg_diff=0.00025, rate_p=0.0045, sigma=9.00, alpha=0.47]
-Summary: [Epoch 8] Loss: 0.0022 | FG Diff: 0.000245 | Rate Proxy: 0.0039
+Final batch: Epoch 8: 100%|==========| 625/625 [00:52<00:00, 11.80it/s, loss=0.0027, fg_diff=0.00014, rate_p=0.0047, sigma=15.99, alpha=0.47]
+Summary: [Epoch 8] Loss: 0.0031 | FG Diff: 0.000196 | Rate Proxy: 0.0057
 
 --- Epoch 9 / 10 ---
-Final batch: Epoch 9: 100%|==========| 625/625 [00:43<00:00, 14.41it/s, loss=0.0024, fg_diff=0.00026, rate_p=0.0042, sigma=9.00, alpha=0.47]
-Summary: [Epoch 9] Loss: 0.0022 | FG Diff: 0.000245 | Rate Proxy: 0.0039
+Final batch: Epoch 9: 100%|==========| 625/625 [00:55<00:00, 11.34it/s, loss=0.0020, fg_diff=0.00016, rate_p=0.0040, sigma=15.99, alpha=0.47]
+Summary: [Epoch 9] Loss: 0.0031 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 --- Epoch 10 / 10 ---
-Final batch: Epoch 10: 100%|==========| 625/625 [00:42<00:00, 14.55it/s, loss=0.0026, fg_diff=0.00024, rate_p=0.0048, sigma=9.00, alpha=0.47]
-Summary: [Epoch 10] Loss: 0.0022 | FG Diff: 0.000245 | Rate Proxy: 0.0039
+Final batch: Epoch 10: 100%|==========| 625/625 [00:53<00:00, 11.64it/s, loss=0.0020, fg_diff=0.00019, rate_p=0.0046, sigma=15.99, alpha=0.47]
+Summary: [Epoch 10] Loss: 0.0031 | FG Diff: 0.000195 | Rate Proxy: 0.0057
 
 ======================================================================
 === Checkpoint Audit & Final Validation ===
-adavcm_epoch_1.pth: train_loss=0.002172, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_2.pth: train_loss=0.002172, fg_diff=0.000245, rate_proxy=0.003852
-adavcm_epoch_3.pth: train_loss=0.002172, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_4.pth: train_loss=0.002172, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_5.pth: train_loss=0.002173, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_6.pth: train_loss=0.002172, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_7.pth: train_loss=0.002172, fg_diff=0.000246, rate_proxy=0.003852
-adavcm_epoch_8.pth: train_loss=0.002172, fg_diff=0.000245, rate_proxy=0.003852
-adavcm_epoch_9.pth: train_loss=0.002171, fg_diff=0.000245, rate_proxy=0.003852
-adavcm_epoch_10.pth: train_loss=0.002171, fg_diff=0.000245, rate_proxy=0.003852
-
-Best Checkpoint: adavcm_best.pth (Epoch 10)
-Final Best Metrics: train_loss=0.002171, fg_diff=0.000245, rate_proxy=0.003852
+Committed Best Checkpoint: checkpoints/adavcm_best.pth (Epoch 10)
+Trained Metrics: train_loss=0.003061, fg_diff=0.000195, rate_proxy=0.005665
+PolicyNet Layer 5 Weight MaxAbs: 0.101628
+PolicyNet Layer 5 Biases: [0.032663, 0.0, 0.0]
+PolicyNet Layer 0 Weight MaxAbs: 0.464910
+PolicyNet Layer 3 Weight MaxAbs: 0.204918

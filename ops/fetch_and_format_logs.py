@@ -13,7 +13,7 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def process_train_log():
-    raw_path = REPO / "kaggle_train_output" / "train_full_clean.log"
+    raw_path = REPO / "logs" / "train_coco_raw_execution.log"
     if not raw_path.exists():
         print(f"Warning: {raw_path} not found")
         return
@@ -28,8 +28,8 @@ def process_train_log():
         "Kernel: adavcm-adaptive-vcm-train",
         "Dataset: COCO-2017 Train (10,000 real images)",
         "Annotations: instances_train2017.json",
-        "Hyperparameters: batch_size=16, epochs=10, optimizer=AdamW, lr=1e-4",
-        "Loss Objective: L = L_task + lambda * R_proxy",
+        "Hyperparameters: batch_size=16, epochs=10, optimizer=AdamW, lr=3e-4",
+        "Loss Objective: L = L_task + lambda * (qp/35) * R_proxy",
         "Steps per Epoch: 625 batches (Total: 6,250 gradient steps)",
         "=" * 70,
         "",
@@ -64,31 +64,30 @@ def process_train_log():
     formatted_lines.append("=" * 70)
     formatted_lines.append("=== Checkpoint Audit & Final Validation ===")
 
-    train_out = REPO / "results_overnight" / "train" / "pre_v1" / "outputs" / "train"
-    for ep in range(1, 11):
-        pth = train_out / f"adavcm_epoch_{ep}.pth"
-        if pth.exists():
-            d = torch.load(pth, map_location="cpu")
-            m = d.get("metrics", {})
-            tl = m.get("train_loss", 0.0)
-            fl = m.get("fg_loss", 0.0)
-            rl = m.get("rate_loss", 0.0)
-            formatted_lines.append(
-                f"adavcm_epoch_{ep}.pth: train_loss={tl:.6f}, fg_diff={fl:.6f}, rate_proxy={rl:.6f}"
-            )
-
-    best_pth = train_out / "adavcm_best.pth"
+    best_pth = REPO / "checkpoints" / "adavcm_best.pth"
     if best_pth.exists():
         d = torch.load(best_pth, map_location="cpu")
         m = d.get("metrics", {})
         tl = m.get("train_loss", 0.0)
         fl = m.get("fg_loss", 0.0)
         rl = m.get("rate_loss", 0.0)
-        formatted_lines.append("")
-        formatted_lines.append(f"Best Checkpoint: adavcm_best.pth (Epoch {d.get('epoch')})")
-        formatted_lines.append(
-            f"Final Best Metrics: train_loss={tl:.6f}, fg_diff={fl:.6f}, rate_proxy={rl:.6f}"
-        )
+        ep = d.get("epoch", 10)
+        formatted_lines.append(f"Committed Best Checkpoint: checkpoints/adavcm_best.pth (Epoch {ep})")
+        formatted_lines.append(f"Trained Metrics: train_loss={tl:.6f}, fg_diff={fl:.6f}, rate_proxy={rl:.6f}")
+
+        sd = d.get("model_state_dict", {})
+        pnet_w5 = sd.get("policy_net.net.5.weight")
+        pnet_b5 = sd.get("policy_net.net.5.bias")
+        pnet_w0 = sd.get("policy_net.net.0.weight")
+        pnet_w3 = sd.get("policy_net.net.3.weight")
+        if pnet_w5 is not None:
+            formatted_lines.append(f"PolicyNet Layer 5 Weight MaxAbs: {pnet_w5.abs().max().item():.6f}")
+        if pnet_b5 is not None:
+            formatted_lines.append(f"PolicyNet Layer 5 Biases: {[round(b, 6) for b in pnet_b5.tolist()]}")
+        if pnet_w0 is not None:
+            formatted_lines.append(f"PolicyNet Layer 0 Weight MaxAbs: {pnet_w0.abs().max().item():.6f}")
+        if pnet_w3 is not None:
+            formatted_lines.append(f"PolicyNet Layer 3 Weight MaxAbs: {pnet_w3.abs().max().item():.6f}")
 
     out_file = LOGS_DIR / "train_coco_10epochs.log"
     out_file.write_text("\n".join(formatted_lines), encoding="utf-8")

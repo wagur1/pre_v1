@@ -81,12 +81,12 @@ class StandardVideoCodec:
 
             # Decode back to raw rgb24
             cmd_dec = [
-                "ffmpeg", "-y", "-v", "error",
+                "ffmpeg", "-nostdin", "-y", "-v", "error",
                 "-i", str(out_mp4),
                 "-f", "rawvideo", "-pix_fmt", "rgb24",
                 "-"
             ]
-            proc_dec = subprocess.Popen(cmd_dec, stdout=subprocess.PIPE)
+            proc_dec = subprocess.Popen(cmd_dec, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE)
             raw_out, _ = proc_dec.communicate()
 
             if len(raw_out) != t * h * w * c:
