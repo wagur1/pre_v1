@@ -26,13 +26,13 @@ def test_salience_and_motion():
 
 
 def test_boundary_aware_filter_preserves_foreground():
-    filt = BoundaryAwareFilter(default_sigma=4.0)
+    filt = BoundaryAwareFilter(default_sigma=3.0)
     x = torch.rand(1, 3, 2, 32, 32)
     # Mask with foreground in center
     w_map = torch.zeros(1, 1, 2, 32, 32)
     w_map[:, :, :, 10:20, 10:20] = 1.0
 
-    out = filt(x, w_map, sigma=6.0)
+    out = filt(x, w_map, sigma=3.5)
     assert out.shape == x.shape
     # Core foreground pixels must be 100% bit-exact identical
     fg_diff = torch.abs(out[:, :, :, 12:18, 12:18] - x[:, :, :, 12:18, 12:18])
@@ -62,7 +62,7 @@ def test_policy_net():
     sigma, alpha, scale = policy(x, w_map, qp=35.0)
     assert sigma.shape == (2,)
     assert alpha.shape == (2,)
-    assert (sigma >= 2.0).all() and (sigma <= 16.0).all()
+    assert (sigma >= 1.0).all() and (sigma <= 5.0).all()
     assert (alpha >= 0.0).all() and (alpha <= 0.95).all()
 
 

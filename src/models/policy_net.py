@@ -29,8 +29,8 @@ class AdaptivePolicyNet(nn.Module):
             nn.SiLU(),
             nn.Linear(hidden_dim, 3),  # [sigma_norm, alpha_norm, scale_logits]
         )
-        # Initialize near center of parameter ranges
-        nn.init.zeros_(self.net[-1].weight)
+        # Initialize final projection with small Xavier uniform weights to avoid zero-gradient stagnation
+        nn.init.xavier_uniform_(self.net[-1].weight, gain=0.1)
         nn.init.zeros_(self.net[-1].bias)
 
     def extract_stats(self, x: torch.Tensor, weight_map: torch.Tensor, qp: float) -> torch.Tensor:
@@ -62,8 +62,8 @@ class AdaptivePolicyNet(nn.Module):
         stats = self.extract_stats(x, weight_map, qp)
         raw = self.net(stats)
 
-        # Sigma mapped to [2.0, 16.0]
-        sigma = 2.0 + 14.0 * torch.sigmoid(raw[:, 0])
+        # Sigma mapped to non-truncating physical range [1.0, 5.0]
+        sigma = 1.0 + 4.0 * torch.sigmoid(raw[:, 0])
         # Alpha mapped to [0.0, 0.95]
         alpha = 0.95 * torch.sigmoid(raw[:, 1])
         # Scale choice or weight
@@ -78,7 +78,7 @@ class AdaVCM(nn.Module):
     def __init__(
         self,
         dilate_radius: int = 5,
-        default_sigma: float = 6.0,
+        default_sigma: float = 3.0,
         default_alpha: float = 0.85,
         learnable_policy: bool = True,
     ):

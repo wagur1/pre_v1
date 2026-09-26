@@ -1,0 +1,18 @@
+=== Real Downstream Neural Action Recognition Benchmark Log ===
+Platform: Windows CPU / PyTorch
+Action Model: Torchvision R3D-18 (Kinetics-400 Pretrained)
+Evaluated Clips: 18 action clips across UCF-101 / HMDB-51 / Kinetics
+Codec: H264 (libx264)
+MPEG-VCM QPs: [27, 32, 38, 43]
+======================================================================
+
+QP 27 | Anchor: 0.1442 bpp, Top-1 Acc: 66.7%, Conf: 45.77% | AdaVCM: 0.1193 bpp, Top-1 Acc: 33.3%, Conf: 28.85% | Bit Saving: +17.27%
+QP 32 | Anchor: 0.0879 bpp, Top-1 Acc: 50.0%, Conf: 41.17% | AdaVCM: 0.0769 bpp, Top-1 Acc: 27.8%, Conf: 26.89% | Bit Saving: +12.57%
+QP 38 | Anchor: 0.0527 bpp, Top-1 Acc: 27.8%, Conf: 30.45% | AdaVCM: 0.0474 bpp, Top-1 Acc: 22.2%, Conf: 23.37% | Bit Saving: +10.06%
+QP 43 | Anchor: 0.0379 bpp, Top-1 Acc: 33.3%, Conf: 26.93% | AdaVCM: 0.0356 bpp, Top-1 Acc: 33.3%, Conf: 22.61% | Bit Saving: +6.21%
+
+======================================================================
+Average Bitrate Saving (Delta R): +11.53%
+Action Recognition Task BD-Rate (Top-1 Axis): +75.21%
+Action Recognition Task BD-Rate (Confidence Axis): +117.82%
+======================================================================

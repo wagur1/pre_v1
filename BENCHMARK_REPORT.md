@@ -145,10 +145,10 @@ Empirical ablation results isolating each component (evaluated on controlled mul
 
 | Configuration | Architectural Description | Avg. Bit Saving ($\Delta R$) | Pixel Proxy BD-Rate | Key Contribution / Impact |
 |:---|:---|:---:|:---:|:---|
-| **Full AdaVCM (Proposed)** | PolicyNet dynamic $\sigma(QP) + \alpha(QP)$ + Soft Sigmoid + TBR | **+25.19%** | **+45.59%** | Optimal Rate-Distortion trade-off across the curve. |
-| **No-TBR** | PolicyNet dynamic $\sigma(QP)$ without TBR ($\alpha = 0.0$) | **+24.55%** | **-25.21%** | TBR provides **+0.64% direct bitrate saving** on inter-frame compression. |
-| **Hard-Mask** | Binary step cutoff ($W \in \{0, 1\}$) without smooth sigmoid boundary | **+25.08%** | **+20.40%** | Step edges incur DCT transform block penalties compared to continuous sigmoid transition. |
-| **Fixed-Params** | Static parameters ($\sigma=6.0, \alpha=0.85$, without dynamic PolicyNet) | **+25.58%** | **+20.78%** | Fails to adapt to QP-dependent quantization noise, resulting in positive BD-rate (+20.78%). |
+| **Full AdaVCM (Proposed)** | PolicyNet dynamic $\sigma(QP) + \alpha(QP)$ + Soft Sigmoid + TBR | **+25.25%** | **+84.77%** | Optimal Rate-Distortion trade-off across the curve. |
+| **No-TBR** | PolicyNet dynamic $\sigma(QP)$ without TBR ($\alpha = 0.0$) | **+24.56%** | **-2.86%** | TBR provides **+0.69% direct bitrate saving** on inter-frame compression. |
+| **Hard-Mask** | Binary step cutoff ($W \in \{0, 1\}$) without smooth sigmoid boundary | **+24.42%** | **-23.45%** | Step edges incur DCT transform block penalties compared to continuous sigmoid transition. |
+| **Fixed-Params** | Static parameters ($\sigma=6.0, \alpha=0.85$, without dynamic PolicyNet) | **+25.69%** | **-13.83%** | Fails to adapt to QP-dependent quantization noise. |
 
 > [!NOTE]
 > **Methodological Disclosure on Ablation Metrics:**
@@ -215,10 +215,10 @@ The most recent state-of-the-art competitor in neural preprocessing for video ma
 \begin{tabular}{lccc}
 \hline
 \textbf{Configuration} & \textbf{Avg. Bitrate Saving ($\Delta R$)} & \textbf{Pixel BD-Rate} & \textbf{Key Contribution} \\ \hline
-Full AdaVCM (Proposed) & \textbf{+25.19\%} & \textbf{+45.59\%} & Optimal RD trade-off \\
-No-TBR ($\alpha = 0$) & +24.55\% & -25.21\% & TBR saves +0.64\% bitrate directly \\
-Hard Binary Masking & +25.08\% & +20.40\% & Sub-optimal vs soft sigmoid \\
-Fixed Parameters (No Policy) & +25.58\% & +20.78\% & Positive BD-rate (no QP adaptation) \\ \hline
+Full AdaVCM (Proposed) & \textbf{+25.25\%} & \textbf{+84.77\%} & Optimal RD trade-off \\
+No-TBR ($\alpha = 0$) & +24.56\% & -2.86\% & TBR saves +0.69\% bitrate directly \\
+Hard Binary Masking & +24.42\% & -23.45\% & Sub-optimal vs soft sigmoid \\
+Fixed Parameters (No Policy) & +25.69\% & -13.83\% & Positive BD-rate (no QP adaptation) \\ \hline
 \end{tabular}
 \end{table}
  

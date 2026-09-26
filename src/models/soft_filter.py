@@ -14,7 +14,7 @@ import torch.nn.functional as F
 
 
 class BoundaryAwareFilter(nn.Module):
-    def __init__(self, default_sigma: float = 6.0):
+    def __init__(self, default_sigma: float = 3.0):
         super().__init__()
         self.default_sigma = default_sigma
 
@@ -25,13 +25,13 @@ class BoundaryAwareFilter(nn.Module):
         else:
             sigma_t = sigma.mean().to(device=x.device, dtype=torch.float32)
 
-        sigma_clamped = torch.clamp(sigma_t, min=0.5, max=16.0)
+        sigma_clamped = torch.clamp(sigma_t, min=0.5, max=5.0)
 
         b, c, t, h, w = x.shape
         flat = x.permute(0, 2, 1, 3, 4).reshape(b * t, c, h, w)
 
-        # Fixed padding radius for differentiable convolution
-        pad = 7
+        # Dynamic padding radius scaled to 2.5 * sigma to eliminate kernel truncation
+        pad = max(3, min(15, int(math.ceil(2.5 * float(sigma_clamped.detach().item())))))
         k = 2 * pad + 1
 
         coords = torch.arange(-pad, pad + 1, dtype=torch.float32, device=x.device)
