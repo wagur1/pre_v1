@@ -175,7 +175,7 @@ The most recent state-of-the-art competitor in neural preprocessing for video ma
 | **Foreground Guarantee** | **Soft Feature Invariance:** Pass through learned convolutional layers; foreground pixel values are modified, introducing vulnerability to out-of-distribution neural features. | **Bit-Exact Identity Mapping:** Pixels within object bounding boxes are mathematically identical to original camera sensor inputs ($I_{\text{prep}}(x,y) \equiv I_{\text{raw}}(x,y)$). | **Zero Feature Drift:** Guaranteed $0.00\%$ distortion to fine-grained classification features and small object textures. |
 | **Boundary Transition** | Convolutional feature blending with residual boundary ringing across codec transform blocks. | **Sigmoidal Soft Transition Ring:** Analytically continuous $S$-curve $W(d) = \sigma((d - d_0)/\tau)$ across $k$ pixel dilation margin. | Completely eliminates block boundary artifacts and high-frequency DCT spikes at object silhouettes. |
 | **Temporal Redundancy** | Deep multi-frame convolutional feature warping / optical flow alignment. | **Temporal Background Regularizer (TBR):** Single-state exponential moving average on non-salient regions ($\hat{X}_t = \alpha X_{t-1} + (1-\alpha) X_t$). | Reduces inter-frame prediction residuals in H.264/H.265 P/B-frames by up to **-92.8%** with negligible compute and zero optical flow latency. |
-| **Complexity & Memory** | Deep multi-layer CNN ($>100\text{k}$ parameters, $>1.0\text{ MB}$ checkpoint). Requires dedicated server GPU. | **Ultra-Lightweight Policy Network:** Only **4,931 parameters** (**0.019 MB** FP32 footprint). | **Feasible on Edge HW:** Runs at 46.6 FPS on edge CPUs and $>130\text{ FPS}$ on edge GPUs (Tesla T4 / Jetson). Fits entirely within embedded L1/L2 SRAM. |
+| **Complexity & Memory** | Deep multi-layer CNN ($>100\text{k}$ parameters, $>1.0\text{ MB}$ checkpoint). Requires dedicated server GPU. | **Ultra-Lightweight Policy Network:** Only **4,931 parameters** (**0.019 MB** FP32 footprint). | **Feasible on Edge HW:** Runs at 46.6 FPS on edge CPUs. Fits entirely within embedded L1/L2 SRAM. |
 | **Codec Portability** | Evaluated on research codecs. | Evaluated directly with commodity H.264/AVC and H.265/HEVC FFmpeg standards. | Standard commodity hardware video encoder compatibility. |
 
 ---
@@ -220,18 +220,18 @@ Fixed Parameters (No Policy) & +25.27\% & +23.84\% & Positive BD-rate (no QP ada
 % --- Table 3: Per-Sequence Performance Breakdown ---
 \begin{table}[t]
 \centering
-\caption{Per-sequence coding performance across standard MPEG-VCM sequences under different motion dynamics (raw data from \texttt{per\_sequence\_benchmark\_results.json}).}
+\caption{Per-sequence coding performance across multi-frame sequences evaluated at 256$\times$256 under different motion dynamics (raw data from \texttt{per\_sequence\_benchmark\_results.json}).}
 \label{tab:per_sequence}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccccc}
 \hline
-\textbf{Sequence} & \textbf{Class / Motion} & \textbf{Resolution} & \textbf{QP 27} & \textbf{QP 32} & \textbf{Avg. Saving ($\Delta R$)} & \textbf{Pixel BD-Rate} \\ \hline
-Traffic\_Surveillance & Low / Static & 1920$\times$1080 & \textbf{-92.90\%} & \textbf{-13.06\%} & \textbf{-25.30\%} & +114.11\% \\
-BQMall\_Crowd & Medium & 832$\times$480 & \textbf{-92.84\%} & \textbf{-9.34\%} & \textbf{-24.28\%} & \textbf{-72.78\%} \\
-PartyScene & Medium-High & 832$\times$480 & \textbf{-92.94\%} & \textbf{-10.80\%} & \textbf{-24.76\%} & +55.48\% \\
-BasketballPass & High Dynamic & 416$\times$240 & \textbf{-92.95\%} & \textbf{-10.89\%} & \textbf{-24.87\%} & \textbf{-0.30\%} \\
-RaceHorses & Fast Motion & 832$\times$480 & \textbf{-92.92\%} & \textbf{-11.59\%} & \textbf{-24.85\%} & \textbf{-17.10\%} \\ \hline
-\textbf{Overall Mean} & — & — & \textbf{-92.91\%} & \textbf{-11.14\%} & \textbf{-24.81\%} & \textbf{+15.88\%} \\ \hline
+\textbf{Sequence} & \textbf{Motion Dynamic} & \textbf{QP 27} & \textbf{QP 32} & \textbf{QP 38} & \textbf{QP 43} & \textbf{Avg. Saving ($\Delta R$)} & \textbf{Pixel BD-Rate} \\ \hline
+Traffic\_Surveillance & Low / Static & \textbf{-92.90\%} & \textbf{-13.06\%} & +3.98\% & +0.77\% & \textbf{-25.30\%} & +114.11\% \\
+BQMall\_Crowd & Moderate / Crowd & \textbf{-92.84\%} & \textbf{-9.34\%} & +4.23\% & +0.84\% & \textbf{-24.28\%} & \textbf{-72.78\%} \\
+PartyScene & Medium-High & \textbf{-92.94\%} & \textbf{-10.80\%} & +3.40\% & +1.30\% & \textbf{-24.76\%} & +55.48\% \\
+BasketballPass & High Dynamic & \textbf{-92.95\%} & \textbf{-10.89\%} & +3.23\% & +1.10\% & \textbf{-24.87\%} & \textbf{-0.30\%} \\
+RaceHorses & Fast Motion & \textbf{-92.92\%} & \textbf{-11.59\%} & +3.68\% & +1.42\% & \textbf{-24.85\%} & \textbf{-17.10\%} \\ \hline
+\textbf{Overall Mean} & — & \textbf{-92.91\%} & \textbf{-11.14\%} & \textbf{+3.70\%} & \textbf{+1.09\%} & \textbf{-24.81\%} & \textbf{+15.88\%} \\ \hline
 \end{tabular}%
 }
 \end{table}
