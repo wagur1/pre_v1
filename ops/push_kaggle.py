@@ -51,6 +51,8 @@ fi
 
 echo "=== [4/4] Evaluating Rate-Accuracy and BD-Rate across QPs [27, 32, 38, 43] ==="
 python evaluate.py --codec h264 --qps 27,32,38,43 --synthetic
+echo "=== Running Ablation Benchmark with Seed 42 ==="
+python ops/run_ablation.py --synthetic --num-samples 50 --seed 42
 
 echo "=== ALL TASKS COMPLETED SUCCESSFULLY ==="
 '''

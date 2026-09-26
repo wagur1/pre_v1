@@ -49,7 +49,7 @@ class SyntheticVCMDataset(Dataset):
             "clip": bg.clamp(0.0, 1.0),
             "boxes": torch.tensor(boxes, dtype=torch.float32),
             "scores": torch.ones(self.num_frames, dtype=torch.float32),
-            "target_qp": 35.0,
+            "target_qp": float([27.0, 32.0, 38.0, 43.0][idx % 4]),
             "id": f"synth_{idx}",
         }
 
@@ -110,7 +110,7 @@ class VideoTaskDataset(Dataset):
             "clip": clip,
             "boxes": boxes_xyxy,
             "scores": [1.0] * len(boxes_xyxy),
-            "target_qp": 35.0,
+            "target_qp": float([27.0, 32.0, 38.0, 43.0][idx % 4]),
             "id": img_path.stem,
         }
 

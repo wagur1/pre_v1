@@ -82,11 +82,12 @@ class PolicyTrainer:
             fg_diff = torch.abs(x_prep - clips) * fg_mask
             fg_loss = fg_diff.sum() / (fg_mask.sum() + 1e-6)
 
-            # 2. Rate Minimization Loss (Proxy entropy reduction on background)
+            # 2. Rate Minimization Loss (Proxy entropy reduction on background scaled by QP)
             rate_proxy = self.compute_rate_proxy(x_prep, w_map)
+            qp_scale = float(qp) / 35.0
 
-            # 3. Overall Objective
-            loss = fg_loss + self.lambda_rate * rate_proxy
+            # 3. Overall Objective (Rate-Accuracy Lagrangian)
+            loss = fg_loss + (self.lambda_rate * qp_scale) * rate_proxy
 
             if self.optimizer is not None and loss.requires_grad:
                 loss.backward()
